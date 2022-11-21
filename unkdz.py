@@ -1,8 +1,9 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 """
 Copyright (C) 2016 Elliott Mitchell <ehem+android@m5p.com>
 Copyright (C) 2013 IOMonster (thecubed on XDA)
+Copyright (C) 2017-2022 steadfasterX <steadfasterX -AT- gmail # com>
 
 	This program is free software: you can redistribute it and/or modify
 	it under the terms of the GNU General Public License as published by
@@ -18,7 +19,6 @@ Copyright (C) 2013 IOMonster (thecubed on XDA)
 	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-from __future__ import print_function
 import os
 import argparse
 import sys
@@ -60,19 +60,19 @@ class KDZFileTools(kdz.KDZFile):
 		# Create a new dict using the keys from the format string
 		# and the format string itself
 		# and apply the format to the buffer
-		kdz_item = dict(zip(
-			self._dz_format_dict.keys(),
+		kdz_item = dict(list(zip(
+			list(self._dz_format_dict.keys()),
 			self._dz_struct.unpack(buf)
-		))
+		)))
 
 		# Collapse (truncate) each key's value if it's listed as collapsible
 		for key in self._dz_collapsibles:
-			if type(kdz_item[key]) is str or type(kdz_item[key]) is bytes:
+			if isinstance(kdz_item[key], str) or isinstance(kdz_item[key], bytes):
 				kdz_item[key] = kdz_item[key].rstrip(b'\x00')
 				if b'\x00' in kdz_item[key]:
 					print("[!] Warning: extraneous data found IN "+key, file=sys.stderr)
 					#sys.exit(1)
-			elif type(kdz_item[key]) is int:
+			elif isinstance(kdz_item[key], int):
 				if kdz_item[key] != 0:
 					print('[!] Error: field "'+key+'" is non-zero ('+b2a_hex(kdz_item[key])+')', file=sys.stderr)
 					sys.exit(1)
@@ -129,9 +129,9 @@ class KDZFileTools(kdz.KDZFile):
 			self.hasExtra = True
 
 		# Make partition list
-		return [(x['name'],x['length']) for x in self.partitions]
+		return [(x['name'], x['length']) for x in self.partitions]
 
-	def extractPartition(self,index):
+	def extractPartition(self, index):
 		"""
 		Extracts a partition from a KDZ file
 		"""
@@ -146,7 +146,7 @@ class KDZFileTools(kdz.KDZFile):
 			os.makedirs(self.outdir)
 
 		# Open the new file for writing
-		outfile = open(os.path.join(self.outdir,currentPartition['name'].decode("utf8")), 'wb')
+		outfile = open(os.path.join(self.outdir, currentPartition['name'].decode("utf8")), 'wb')
 
 		# Use 1024 byte chunks
 		chunkSize = 1024
@@ -260,7 +260,7 @@ class KDZFileTools(kdz.KDZFile):
 
 		if verify_header not in self.kdz_header:
 			print("[!] Error: Unsupported KDZ file format.")
-			print('[ ] Received header "{:s}".'.format(" ".join(b2a_hex(n) for n in verify_header)))
+#			print('[ ] Received header "{:s}".'.format(" ".join(b2a_hex(n) for n in verify_header)))
 			sys.exit(1)
 
 		self.header_type = self.kdz_header[verify_header]
@@ -268,13 +268,13 @@ class KDZFileTools(kdz.KDZFile):
 
 	def cmdExtractSingle(self, partID):
 		print("[+] Extracting single partition from v{:d} file!\n".format(self.header_type))
-		print("[+] Extracting " + str(self.partList[partID][0]) + " to " + os.path.join(self.outdir,self.partList[partID][0].decode("utf8")))
+		print("[+] Extracting " + str(self.partList[partID][0]) + " to " + os.path.join(self.outdir, self.partList[partID][0].decode("utf8")))
 		self.extractPartition(partID)
 
 	def cmdExtractAll(self):
 		print("[+] Extracting all partitions from v{:d} file!\n".format(self.header_type))
 		for part in enumerate(self.partList):
-			print("[+] Extracting " + part[1][0].decode("utf8") + " to " + os.path.join(self.outdir,part[1][0].decode("utf8")))
+			print("[+] Extracting " + part[1][0].decode("utf8") + " to " + os.path.join(self.outdir, part[1][0].decode("utf8")))
 			self.extractPartition(part[0])
 		self.saveExtra()
 		self.saveParams()
