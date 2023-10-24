@@ -264,7 +264,7 @@ class GPT(object):
 		self.entrySize = data['entrySize']
 		self.entryCrc32 = data['entryCrc32']
 
-		if self.revision>>16 != 1:
+		if self.revision>>16 != 1 and self.revision>>30 != 1:
 			raise NoGPT("Error: GPT major version isn't 1")
 		elif self.revision&0xFFFF != 0:
 			verbose("Warning: Newer GPT revision")
